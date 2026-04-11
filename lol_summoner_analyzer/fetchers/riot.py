@@ -84,7 +84,7 @@ def get(self, url: str, params: dict | None = None, retries: int = 3) -> dict:
         except requests.exceptions.ConnectionError as exc:
             raise RioteApiError(0, f"Network Error: {exc}")
 
-        if response.status_code = 429:
+        if response.status_code == 429:
             wait = int(response.headers.get("Retry-After", 5))
             time.sleep(wait)
             continue
