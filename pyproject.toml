@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lol-analyzer"
+version = "1.0.0"
+description = "League of Legends ranked performance analyzer powered by AI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["league-of-legends", "esports", "cli", "ai", "coaching"]
+dependencies = [
+    "typer[all]>=0.12",
+    "rich>=13",
+    "requests>=2.31",
+    "anthropic>=0.25",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-mock>=3"]
+
+[project.scripts]
+lol-stats = "lol_analyzer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lol_analyzer*"]
