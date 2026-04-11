@@ -73,7 +73,7 @@ def get(self, url: str, params: dict | None = None, retries: int = 3) -> dict:
     GET a Riot API endpoint.
     Retries up to 'retries' times on 429 (rate limit), respecting the Retry-After header when present.
     """
-    for attempt in rang(retries):
+    for attempt in range(retries):
         try:
             response = self._session.get(url, params=params or {}, timeout = 10)
         except requests.exceptions.Timeout:
@@ -100,7 +100,7 @@ def get(self, url: str, params: dict | None = None, retries: int = 3) -> dict:
 
 # Public API
 
-def get_puuid(self, game_name: str, tage_line: str) -> str:
+def get_puuid(self, game_name: str, tag_line: str) -> str:
     """
     Resolve a Riote ID (GameName + tagLine) to a PUUID.
     """
