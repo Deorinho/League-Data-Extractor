@@ -41,9 +41,10 @@ def analyse(
         raise typer.Exit(1)
 
     game_name, tag_line = summoner.split("#", 1)
+    display.show_banner()
 
     puuid: str = ""
-    rank_info: RankInfo | None = None
+    rank_info = None
     matches: list[dict] = []
     timelines: list[dict] = []
 
@@ -53,7 +54,7 @@ def analyse(
             puuid = client.get_puuid(game_name, tag_line)
 
             rank_info = client.get_rank(puuid)
-            display.show_progress(f"Rank: {rank_info or 'Unranked'}")
+            display.show_rank_panel(rank_info)
 
             display.show_progress(f"Fetching last {num_games} ranked matches...")
             match_ids = client.get_ranked_match_ids(puuid, count=num_games)
@@ -62,12 +63,13 @@ def analyse(
                 display.show_error("No ranked games found for this summoner.")
                 raise typer.Exit(1)
 
-            total = len(match_ids)
-            for idx, mid in enumerate(match_ids, 1):
-                display.show_progress(f"  [{idx}/{total}] {mid}")
-                matches.append(client.get_match(mid))
-                if not no_timeline:
-                    timelines.append(client.get_timeline(mid))
+            with display.make_fetch_progress() as progress:
+                task = progress.add_task("Fetching matches", total=len(match_ids))
+                for mid in match_ids:
+                    matches.append(client.get_match(mid))
+                    if not no_timeline:
+                        timelines.append(client.get_timeline(mid))
+                    progress.advance(task)
 
         except RiotApiError as exc:
             display.show_error(str(exc))
