@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/c/Users/Warlock/Desktop/Projects/**)",
+      "Bash(python -c \"import lol_analyzer; print\\(dir\\(lol_analyzer\\)\\)\")",
+      "Bash(python -c \"import lol_summoner_analyzer; print\\(dir\\(lol_summoner_analyzer\\)\\)\")"
+    ]
+  }
+}

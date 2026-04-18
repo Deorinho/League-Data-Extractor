@@ -21,8 +21,8 @@ dependencies = [
 dev = ["pytest>=8", "pytest-mock>=3"]
 
 [project.scripts]
-lol-stats = "lol_analyzer.cli:main"
+lol-stats = "lol_summoner_analyzer.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["lol_analyzer*"]
+include = ["lol_summoner_analyzer*"]

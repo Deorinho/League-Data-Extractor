@@ -9,7 +9,7 @@ The /api/chat endpoint is used (not /api/generate) so that the
 system prompt is handled correctly by all model families.
 """
 import requests
-from lol_analyzer.analyzer import COACHING_SYSTEM_PROMPT
+from lol_summoner_analyzer.analyzer import COACHING_SYSTEM_PROMPT
 
 DEFAULT_HOST  = "http://localhost:11434"
 DEFAULT_MODEL = "llama3"
