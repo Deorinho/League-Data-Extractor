@@ -3,7 +3,9 @@ Transforms raw Riot match data into a structured AI coaching prompt.
 """
 from __future__ import annotations
 
-from lol_summoner_analyzer.fetchers.riot import mirror_participant_id
+from typing import Any
+
+from lol_summoner_analyzer.fetchers.riot import RankInfo, mirror_participant_id
 
 COACHING_SYSTEM_PROMPT = """\
 You are an expert League of Legends coach. Analyze the player's recent ranked match data and provide \
@@ -19,14 +21,23 @@ Individual mechanics: CS accuracy, trading patterns, death causes, cooldown usag
 Map awareness, objective control, roaming, vision score trends, teamfight decision-making.
 
 Rules:
+- The player's current rank is provided. Calibrate your feedback to that level — hold them to the \
+fundamentals expected at their rank, not higher. Use rank-appropriate benchmarks \
+(e.g. Iron/Bronze: 4-5 CS/min; Silver: 6+; Gold: 7+; Platinum+: 7.5+). \
+Do not criticize a Silver player for not playing like a Diamond player.
 - Reference actual numbers from the data.
 - Be concise — 3-5 bullet points per section.
-- Prioritize the highest-impact improvements, not generic advice.
+- Prioritize the highest-impact improvements for climbing at their current rank.
 - If the sample is too small to draw a conclusion, say so.\
 """
 
 
-def build_prompt(matches: list[dict], timelines: list[dict], puuid: str) -> str:
+def build_prompt(
+    matches: list[dict[str, Any]],
+    timelines: list[dict[str, Any]],
+    puuid: str,
+    rank_info: RankInfo | None = None,
+) -> str:
     """Build the user-facing coaching prompt from raw match and timeline data."""
     rows: list[str] = []
     agg = {
@@ -90,17 +101,20 @@ def build_prompt(matches: list[dict], timelines: list[dict], puuid: str) -> str:
     avg_gold = round(agg["gold"] / n)
     avg_dmg = round(agg["damage"] / n)
 
-    def _fmt_avg(lst: list) -> str:
-        return f"{round(sum(lst) / len(lst)):+d}" if lst else "N/A"
+    rank_line = (
+        f"Current Rank : {rank_info} — {rank_info.wins}W {rank_info.losses}L this split\n"
+        if rank_info else "Current Rank : Unranked\n"
+    )
 
     summary = (
         f"=== LAST {n} RANKED SOLO/DUO GAMES ===\n"
-        f"Win Rate : {win_rate}%  ({agg['wins']}W / {n - agg['wins']}L)\n"
-        f"Avg KDA  : {avg_kda}   Avg CS/min : {avg_cs_pm}   Avg Vision : {avg_vision}\n"
-        f"Avg Gold : {avg_gold}   Avg Damage : {avg_dmg}\n"
-        f"Avg Gold Diff @10 : {_fmt_avg(agg['early_gold_diffs'])}   "
-        f"Avg CS Diff @10 : {_fmt_avg(agg['early_cs_diffs'])}\n\n"
-        "=== PER-GAME BREAKDOWN ===\n"
+        + rank_line
+        + f"Win Rate : {win_rate}%  ({agg['wins']}W / {n - agg['wins']}L)\n"
+        + f"Avg KDA  : {avg_kda}   Avg CS/min : {avg_cs_pm}   Avg Vision : {avg_vision}\n"
+        + f"Avg Gold : {avg_gold}   Avg Damage : {avg_dmg}\n"
+        + f"Avg Gold Diff @10 : {_fmt_avg(agg['early_gold_diffs'])}   "
+        + f"Avg CS Diff @10 : {_fmt_avg(agg['early_cs_diffs'])}\n\n"
+        + "=== PER-GAME BREAKDOWN ===\n"
         + "\n".join(rows)
     )
 
@@ -110,18 +124,24 @@ def build_prompt(matches: list[dict], timelines: list[dict], puuid: str) -> str:
     )
 
 
+# --- private helpers ---
+
 def _safe_div(a: float, b: float) -> float:
     return a / b if b else 0.0
 
 
-def _find_player(match: dict, puuid: str) -> dict | None:
+def _fmt_avg(lst: list[int]) -> str:
+    return f"{round(sum(lst) / len(lst)):+d}" if lst else "N/A"
+
+
+def _find_player(match: dict[str, Any], puuid: str) -> dict[str, Any] | None:
     for p in match["info"]["participants"]:
         if p["puuid"] == puuid:
             return p
     return None
 
 
-def _early_diffs(timeline: dict, participant_id: int) -> tuple[int, int]:
+def _early_diffs(timeline: dict[str, Any], participant_id: int) -> tuple[int, int]:
     """Extract gold and CS differential vs lane opponent at 10 minutes."""
     opponent_id = mirror_participant_id(participant_id)
     frames = timeline.get("info", {}).get("frames", [])
@@ -132,8 +152,8 @@ def _early_diffs(timeline: dict, participant_id: int) -> tuple[int, int]:
 
     pf = frames[target_frame].get("participantFrames", {})
 
-    # Riot returns participantFrames keyed as strings or ints depending on version
-    def _pf(pid: int) -> dict:
+    # Riot returns participantFrames keyed as strings or ints depending on API version
+    def _pf(pid: int) -> dict[str, Any]:
         return pf.get(str(pid), pf.get(pid, {}))
 
     mine = _pf(participant_id)

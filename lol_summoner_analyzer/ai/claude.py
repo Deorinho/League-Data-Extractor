@@ -5,8 +5,8 @@ Requires the `anthropic` package and a valid API key.
 import anthropic
 from lol_summoner_analyzer.analyzer import COACHING_SYSTEM_PROMPT
 
-# Default model — change to claude-opus-4-5 for deeper analysis (costs more).
-DEFAULT_MODEL = "claude-sonnet-4-5"
+# Default model — change to claude-opus-4-7 for deeper analysis (costs more).
+DEFAULT_MODEL = "claude-sonnet-4-6"
 
 
 def analyse(prompt: str, api_key: str, model: str = DEFAULT_MODEL) -> str:
